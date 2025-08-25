@@ -13,6 +13,33 @@ accounts = {
 }
 
 
+# Helper function to validate account and amount
+def validate_account_and_amount(account_number, data):
+    # Check if account exists
+    if account_number not in accounts:
+        return {
+            "error": "Account not found",
+            "account_number": account_number
+        }, 404
+
+    # Check if amount is provided
+    if not data or 'amount' not in data:
+        return {
+            "error": "Amount is required",
+            "example": {"amount": 100.50}
+        }, 400
+
+    amount = data['amount']
+
+    # Validate amount
+    if not isinstance(amount, (int, float)) or amount <= 0:
+        return {
+            "error": "Amount must be a positive number"
+        }, 400
+
+    return None, amount  # No error, return the amount
+
+
 # Basic route to test if server is running
 @app.route('/')
 def home():
@@ -46,28 +73,10 @@ def get_balance(account_number):
 # POST /accounts/{account_number}/withdraw
 @app.route('/accounts/<account_number>/withdraw', methods=['POST'])
 def withdraw_money(account_number):
-    # Check if account exists
-    if account_number not in accounts:
-        return jsonify({
-            "error": "Account not found",
-            "account_number": account_number
-        }), 404
-
-    # Get the amount from the request body
-    data = request.get_json()
-    if not data or 'amount' not in data:
-        return jsonify({
-            "error": "Amount is required",
-            "example": {"amount": 100.50}
-        }), 400
-
-    amount = data['amount']
-
-    # Validate amount
-    if not isinstance(amount, (int, float)) or amount <= 0:
-        return jsonify({
-            "error": "Amount must be a positive number"
-        }), 400
+    # Validate account and amount
+    error_response, amount = validate_account_and_amount(account_number, request.get_json())
+    if error_response:
+        return jsonify(error_response[0]), error_response[1]
 
     current_balance = accounts[account_number]["balance"]
 
@@ -94,28 +103,10 @@ def withdraw_money(account_number):
 # POST /accounts/{account_number}/deposit
 @app.route('/accounts/<account_number>/deposit', methods=['POST'])
 def deposit_money(account_number):
-    # Check if account exists
-    if account_number not in accounts:
-        return jsonify({
-            "error": "Account not found",
-            "account_number": account_number
-        }), 404
-
-    # Get the amount from the request body
-    data = request.get_json()
-    if not data or 'amount' not in data:
-        return jsonify({
-            "error": "Amount is required",
-            "example": {"amount": 100.50}
-        }), 400
-
-    amount = data['amount']
-
-    # Validate amount
-    if not isinstance(amount, (int, float)) or amount <= 0:
-        return jsonify({
-            "error": "Amount must be a positive number"
-        }), 400
+    # Validate account and amount
+    error_response, amount = validate_account_and_amount(account_number, request.get_json())
+    if error_response:
+        return jsonify(error_response[0]), error_response[1]
 
     # Perform deposit
     accounts[account_number]["balance"] += amount
